@@ -51,6 +51,7 @@ else
  * Needed for storing global data
  */
 $GLOBALS['ZFORM2DOWNLOAD'] = array();
+$GLOBALS['ZFORM2DOWNLOAD']['articles'] = array();
 
 /**
  * Settings

@@ -46,6 +46,7 @@ class Form2DownloadFallback extends Frontend
 		$this->import('Session');
 		//$this->import('Environment');
 		$this->import('Input');
+		
 	}
 	
 		
@@ -76,9 +77,12 @@ class Form2DownloadFallback extends Frontend
 			{
 				global $objPage;
 				$objArticle = $this->Database->execute("SELECT * FROM tl_article WHERE pid=" . $objPage->id . " AND published=1 AND showTeaser!=1 ORDER BY sorting");
+				//$arrArticles = $objArticle->fetchAllAssoc();
 				
 				while( $objArticle->next() )
+				//foreach($arrArticles as $article)
 				{
+					//$objArticle->id = $article['id'];
 					// check if the current form is a form2download Element
 					$objCteForm = $this->Database->prepare("SELECT * FROM tl_content WHERE pid=? AND type=? AND form=?")
 								->limit(1)
@@ -90,15 +94,15 @@ class Form2DownloadFallback extends Frontend
 				   				->limit(1)
 				   				->execute($objArticle->id, 'download');
 					if(!$objCteDownload->numRows) continue;
-				
+					
+					
 					// store processed values in global array and compare with last one
-					if($GLOBALS['ZFORM2DOWNLOAD']['ctePID'] != $objArticle->id)
+					if( !in_array($objArticle->id, $GLOBALS['ZFORM2DOWNLOAD']['articles']) )
 					{
-						$GLOBALS['ZFORM2DOWNLOAD']['ctePID'] = $objArticle->id;
-						//$GLOBALS['ZFORM2DOWNLOAD']['cte']['form'] = $objCteForm->id;
-						//$GLOBALS['ZFORM2DOWNLOAD']['cte']['download'] = $objCteDownload->id;
-						break;
-					}							
+						 $GLOBALS['ZFORM2DOWNLOAD']['articles'][] = $objArticle->id;
+						 break;
+					}
+									
 				}
 			}
 			else // it is a teasered page
@@ -118,13 +122,11 @@ class Form2DownloadFallback extends Frontend
 				if(!$objCteDownload->numRows) return $strBuffer;
 			}
 			//------
-			
-			
-					
+				
 			// add a unique id and add a new class
 			$arrCssID = $objElement->cssID; 
 			if(strlen($arrCssID[0]) > 0) $spacer = '_';
-			$arrCssID[0] .= $space . 'form2download_form' . $ctePID . '_' . $cteID;
+			$arrCssID[0] .= $space . 'form2download_form' . $objArticle->id . '_' . $objCteForm->id;
 			if(strlen($arrCssID[1]) > 0) $spacer = ' ';
 			$arrCssID[1] .= $spacer . 'form2download_form' . $spacer;
 			
@@ -152,11 +154,10 @@ class Form2DownloadFallback extends Frontend
 			
 			// Modify depending on session
 			$visible = true;
-			$this->import('Session');
-			//$this->Session->remove('zForm2Download');
-			$session = $this->Session->getData();
+			//
 			
-			if(isset($session['zForm2Download']) && is_array($session['zForm2Download']) )
+			$session = $this->Session->getData();
+			if( isset($session['zForm2Download']) && is_array($session['zForm2Download']) )
 			{
 				//$strEmailField = $this->getEmailFormField($objElement->id);
 				
@@ -172,7 +173,6 @@ class Form2DownloadFallback extends Frontend
 				$this->import('Input');
 				$strEmail = $this->Input->post($strEmailField);
 				$strClearEmail = standardize($strEmail);
-				
 				// Visibility 
 				// if session is set for this element, visiblity of form = false
 				if( $session['zForm2Download'][$strClearEmail][$objArticle->id]['cte_id_form'] == $objCteForm->id )
@@ -219,7 +219,7 @@ class Form2DownloadFallback extends Frontend
 			// add a unique id and add a new class
 			$arrCssID = $objElement->cssID; 
 			if(strlen($arrCssID[0]) > 0) $spacer = '_';
-			$arrCssID[0] .= $space . 'form2download_download' . $ctePID . '_' . $cteID;
+			$arrCssID[0] .= $space . 'form2download_download' .$objElement->pid . '_' . $objElement->id;
 			if(strlen($arrCssID[1]) > 0) $spacer = ' ';
 			$arrCssID[1] .= $spacer . 'form2download_download' . $spacer;
 			$objElement->cssID = $arrCssID;
